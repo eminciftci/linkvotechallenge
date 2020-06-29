@@ -1,0 +1,87 @@
+.app {
+    width: 60%;
+    margin: 0 auto;
+}
+
+.content {
+    width: 50%;
+    margin: 0 auto;
+}
+
+.point-card-style {
+    background-color:whitesmoke;
+    border: 1px solid;
+}
+
+.content-card-style {
+    width: 23em;
+}
+
+.order-by {
+    margin-bottom: 20px;
+}
+
+.vote-buttons {
+    font-size: x-small;
+    margin-top: 10px;
+    margin-left: -1em;
+    margin-bottom: -16px;
+}
+
+.form-button {
+    background-color: #fc6404;
+    color: white;
+}
+
+.points-text {
+    text-align: center;
+}
+
+.link-name {
+    margin-top: -20px;
+    font-weight: bold;
+    font-size: large;
+}
+
+.delete-button {
+    position: absolute;
+    color: red;
+    margin-top: -40px;
+    margin-right: -1em;
+}
+
+.submit-button {
+    width: 98%;
+}
+
+.point-style {
+    margin-top: -20px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 250%;
+}
+
+.header {
+    border-bottom: 1px solid #dcdcdc;
+}
+
+.ant-page-header-heading-title {
+    color: 	#fc6404;
+    font-size: xx-large;
+    font-weight: bold;
+}
+
+.form-header {
+    font-weight: bold;
+}
+
+.ant-page-header-heading-extra {
+    font-size: large;
+    margin-top: 12px;
+}
+
+.ant-btn-lg {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
