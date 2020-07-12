@@ -11,6 +11,7 @@ import {
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import * as Constants from '../constants/AppConstants'
 import 'react-toastify/dist/ReactToastify.css';
+import *as Util from '../util/Util';
 
 const AddItemPage = (({history}) => {
 
@@ -21,7 +22,7 @@ const AddItemPage = (({history}) => {
         let object = values;
         object[Constants.FIELDS.points] = 0;
         object[Constants.FIELDS.created_date] = new Date();
-        list = addItemToList(object, list);
+        list = Util.addTopOfList(object, list);
         localStorage.setItem("linkList", JSON.stringify(list));
         toast.success(object.linkName.toUpperCase() + " is added", {
             position: "top-center",
@@ -30,10 +31,6 @@ const AddItemPage = (({history}) => {
         });
         form.resetFields();
     };
-
-    const addItemToList = (object, list) => {
-        return [object, ...list];
-    }
 
     const returnToListPage = () => {
         history.push('/');

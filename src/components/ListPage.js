@@ -1,6 +1,6 @@
-import React from 'react';
-import cloneDeep from 'lodash/cloneDeep';
+import React, { useState, useEffect } from 'react';
 import * as Constants from '../constants/AppConstants'
+import cloneDeep from 'lodash/cloneDeep';
 
 import {
     Button,
@@ -21,132 +21,103 @@ import {
     toast
 } from 'react-toastify';
 import { Confirm } from 'semantic-ui-react';
+import *as Util from '../util/Util';
 
-class ListPage extends React.Component {
+const ListPage = (({history}) => {
 
-    constructor(props) {
-        super(props);
+    const [list, setList] = useState([]);
+    const [index, setIndex] = useState(null);
+    const [showPagination, setShowPagination] = useState(false);
+    const [pageNumber, setPageNumber] = useState(1);
+    const [confirmModal, setConfirmModal] = useState(false);
+    const [deleteIndex, setDeleteIndex] = useState(0);
 
-        this.state = {
-            list: [],
-            index: null,
-            showPagination: false,
-            pageNumber: 1,
-            confirmModal: false
-        };
-    }
-
-    componentDidMount() {
+    useEffect(() => {
         if (localStorage.getItem("linkList")) {
-            let list = JSON.parse(localStorage.getItem("linkList"));
-            let showPagination = list.length > 5;
-            this.setState({list: list,
-                                showPagination: showPagination});
+            let initialList = JSON.parse(localStorage.getItem("linkList"));
+            let showPage = initialList.length > 5;
+            setList([...initialList]);
+            setShowPagination(showPage);
         }
-    }
+    }, [])
 
-    voteUp = (e,index) => {
+
+    const voteUp = (e,index) => {
+        debugger;
         if (index !== "") {
-            let list = cloneDeep(this.state.list);
-            list[index].points += 1;
-
-            for (let i = index; i > 0; i--) {
-                if (list[i].points >= list[i - 1].points) {
-                    let temp = list[i - 1];
-                    list[i - 1] = list[i];
-                    list[i] = temp;
-                } else
-                    break;
-            }
-
-            this.setState({list: list});
-            this.saveListToLocalStorage(cloneDeep(list));
+            let sortedList = Util.voteUpSorting(list, index);
+            setList([...sortedList]);
+            saveListToLocalStorage(sortedList);
         }
 
     };
 
-    voteDown = (e, index) => {
+    const voteDown = (e, index) => {
         if (index !== "") {
-            let list = cloneDeep(this.state.list);
-            if (list[index].points !== 0)
-                list[index].points -= 1;
-
-            for (let i = index; i < list.length; i++) {
-                if (i + 1 < list.length) {
-                    if (list[i].points < list[i + 1].points) {
-                        let temp = list[i + 1];
-                        list[i + 1] = list[i];
-                        list[i] = temp;
-                    } else
-                        break;
-                }
-            }
-
-            this.setState({list: list});
-            this.saveListToLocalStorage(cloneDeep(list));
+            let sortedList = Util.voteDownSorting(list, index);
+            setList([...sortedList]);
+            saveListToLocalStorage(sortedList);
         }
     };
 
-    saveListToLocalStorage = (list) => {
+    const saveListToLocalStorage = (list) => {
         list.sort(function(a,b){
             return new Date(b.createdDate) - new Date(a.createdDate);
         });
         localStorage.setItem("linkList", JSON.stringify(list));
     }
 
-    openAddItemPage = () => {
-        this.saveListToLocalStorage(cloneDeep(this.state.list))
-        this.props.history.push('/addItemPage');
+    const openAddItemPage = () => {
+        saveListToLocalStorage(list)
+        history.push('/addItemPage');
     };
 
-    handleDropdownChange = (value) => {
-        let list = cloneDeep(this.state.list);
+    const handleDropdownChange = (value) => {
+        let sortedList;
         if (value === Constants.VALUES.less_voted) {
-            list.sort(function(a,b){
-                return parseInt(a.points)  - parseInt(b.points);
-            })
+            sortedList = Util.sortAscending(list);
         } else {
-            list.sort(function(a,b){
-                return parseInt(a.points)  - parseInt(b.points);
-            }).reverse()
+            sortedList = Util.sortDescending(list);
         }
-
-        this.setState({list:list});
+        setList([...sortedList]);
         return list;
     };
 
-    showDeleteButton = (i) => {
-        this.setState({index: i});
+    const showDeleteButton = (i) => {
+        setIndex(i);
     }
 
-    hideDeleteButton = () => {
-        this.setState({index: null});
+    const hideDeleteButton = () => {
+        setIndex(null);
     }
 
-    onPageNumberChange = (value) => {
-       this.setState({pageNumber: value});
+    const onPageNumberChange = (value) => {
+        setPageNumber(value);
     }
 
-    deleteLink = (index) => {
-        let list = cloneDeep(this.state.list);
-        toast.success(list[index].linkName.toUpperCase() + " is deleted", {
+    const deleteLink = (index) => {
+        debugger;
+        let clonedList = cloneDeep(list);
+        toast.success(clonedList[index].linkName.toUpperCase() + " is deleted", {
             position: "top-center",
             autoClose: 3000,
             hideProgressBar: true
         });
-        list.splice(index, 1);
-        let showPagination = list.length > 5
+        clonedList.splice(index, 1);
+        let showPage = clonedList.length > 5
         //sayfada link kalmazsa bir önceki sayfaya atar.
-        let pageNumber = list.length % 5 === 0 && this.state.pageNumber !== 1 ?
-            cloneDeep(this.state.pageNumber) - 1 :
-            cloneDeep(this.state.pageNumber)
-        this.setState({list: list,
-                            showPagination: showPagination,
-                            pageNumber: pageNumber});
-        this.saveListToLocalStorage(cloneDeep(list));
+        let pageNumberLocal = clonedList.length % 5 === 0 && pageNumber !== 1 ?
+            pageNumber - 1 :
+            pageNumber
+        setList([...clonedList]);
+        setShowPagination(showPage);
+        setPageNumber(pageNumberLocal);
+        setConfirmModal(false);
+        setDeleteIndex(0);
+        saveListToLocalStorage(clonedList);
     }
 
-    prepareListComponents = (list, pageNumber) => {
+    const prepareListComponents = (list, pageNumber) => {
         let tempList = list;
         //sayfa numarasına göre indexleme
         let offset = ((pageNumber - 1) * 5);
@@ -154,8 +125,8 @@ class ListPage extends React.Component {
             tempList = tempList.slice(offset, offset + 5);
         }
         let cardList = tempList.map((link,idx) => {
-            let index = offset + idx;
-            return <div key={index} onMouseEnter={() => this.showDeleteButton(index)} onMouseLeave={() => this.hideDeleteButton()}>
+            let localIndex = offset + idx;
+            return <div key={localIndex} onMouseEnter={() => showDeleteButton(localIndex)} onMouseLeave={() => hideDeleteButton()}>
                 <Row>
                     <Col>
                         <Card className="point-card-style">
@@ -186,39 +157,42 @@ class ListPage extends React.Component {
                                 <Col>
                                     <Button className="delete-button"
                                             type="text"
-                                            hidden={index !== this.state.index}
-                                            onClick={() => this.setState({confirmModal: true})}>
+                                            hidden={localIndex !== index}
+                                            onClick={() => {
+                                                setConfirmModal(true);
+                                                setDeleteIndex(localIndex);
+                                            }}>
                                         <MinusCircleFilled />
                                     </Button>
                                     <Confirm
-                                        open={this.state.confirmModal}
-                                        onConfirm={() => this.deleteLink(index)}
-                                        onCancel={() => this.setState({confirmModal: false})}
+                                        open={confirmModal}
+                                        onConfirm={() => deleteLink(deleteIndex)}
+                                        onCancel={() => setConfirmModal(false)}
                                         header={Constants.ALERTS.delete_item}
-                                        content={link.linkName.toUpperCase()}
+                                        content={list[deleteIndex].linkName !== undefined ? list[deleteIndex].linkName.toUpperCase(): ""}
                                     />
                                 </Col>
                             </Row>
                             <Col>
                                 <div className="vote-buttons">
-                                <Row>
-                                    <Col>
-                                        <Button type="text"
-                                                className="vote-buttons"
-                                                onClick={(e) => this.voteUp(e,index)}>
-                                            <ArrowUpOutlined />
-                                            {Constants.LABELS.up_vote}
-                                        </Button>
-                                    </Col>
-                                    <Col>
-                                        <Button type="text"
-                                                className="vote-buttons"
-                                                onClick={(e) => (this.voteDown(e,index))}>
-                                            <ArrowDownOutlined />
-                                            {Constants.LABELS.down_vote}
-                                        </Button>
-                                    </Col>
-                                </Row>
+                                    <Row>
+                                        <Col>
+                                            <Button type="text"
+                                                    className="vote-buttons"
+                                                    onClick={(e) => voteUp(e,localIndex)}>
+                                                <ArrowUpOutlined />
+                                                {Constants.LABELS.up_vote}
+                                            </Button>
+                                        </Col>
+                                        <Col>
+                                            <Button type="text"
+                                                    className="vote-buttons"
+                                                    onClick={(e) => (voteDown(e,localIndex))}>
+                                                <ArrowDownOutlined />
+                                                {Constants.LABELS.down_vote}
+                                            </Button>
+                                        </Col>
+                                    </Row>
                                 </div>
                             </Col>
                         </Card>
@@ -231,32 +205,32 @@ class ListPage extends React.Component {
         return cardList
     };
 
-    render() {
-        return (
-            <div className="content">
-                <ToastContainer/>
-                <Button className="submit-button"
-                        block
-                        size={"large"}
-                        icon={<PlusOutlined/>}
-                        onClick={this.openAddItemPage}>
-                    {Constants.BUTTONS.submit_a_link}
-                </Button>
+    return(
+        <div className="content">
+            <ToastContainer/>
+            <Button className="submit-button"
+                    block
+                    size={"large"}
+                    icon={<PlusOutlined/>}
+                    onClick={openAddItemPage}>
+                {Constants.BUTTONS.submit_a_link}
+            </Button>
 
-                
-                <div className="order-by">
-                    <Select onChange={this.handleDropdownChange} style={{ width: '50%', backgroundColor: 'whitesmoke' }} placeholder="Order By">
-                        <Select.Option value={Constants.VALUES.most_voted}>{Constants.LABELS.most_voted}</Select.Option>
-                        <Select.Option value={Constants.VALUES.less_voted}>{Constants.LABELS.less_voted}</Select.Option>
-                    </Select>
-                </div>
-                {this.prepareListComponents(this.state.list, this.state.pageNumber)}
-                {this.state.showPagination && <Pagination total={(Math.floor(this.state.list.length / 5) + 1) * 10} onChange={this.onPageNumberChange}/>}
+
+            <div className="order-by">
+                <Select onChange={handleDropdownChange} style={{ width: '50%', backgroundColor: 'whitesmoke' }} placeholder="Order By">
+                    <Select.Option value={Constants.VALUES.most_voted}>{Constants.LABELS.most_voted}</Select.Option>
+                    <Select.Option value={Constants.VALUES.less_voted}>{Constants.LABELS.less_voted}</Select.Option>
+                </Select>
             </div>
+            {prepareListComponents(list, pageNumber)}
+            {showPagination && <Pagination total={(Math.floor(list.length / 5) + 1) * 10} onChange={onPageNumberChange}/>}
+        </div>
 
 
-        );
-    }
-}
+    );
+
+})
+
 
 export default ListPage
